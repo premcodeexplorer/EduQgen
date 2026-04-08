@@ -1,0 +1,273 @@
+{
+  "lstm": {
+    "name": "Bidirectional LSTM",
+    "total_params": 2628161,
+    "epochs": 5,
+    "batch_size": 64,
+    "training_samples": 27254,
+    "history": {
+      "accuracy": [
+        0.7955805659294128,
+        0.7967628836631775,
+        0.8349640965461731
+      ],
+      "loss": [
+        0.5211114883422852,
+        0.4687880575656891,
+        0.37951672077178955
+      ],
+      "val_accuracy": [
+        0.795671284198761,
+        0.795671284198761,
+        0.7432134747505188
+      ],
+      "val_loss": [
+        0.506542980670929,
+        0.5381818413734436,
+        0.5524510741233826
+      ]
+    },
+    "layers": [
+      {
+        "name": "input_layer",
+        "type": "InputLayer",
+        "output_shape": "N/A",
+        "params": 0
+      },
+      {
+        "name": "embedding",
+        "type": "Embedding",
+        "output_shape": "N/A",
+        "params": 2560000
+      },
+      {
+        "name": "bidirectional",
+        "type": "Bidirectional",
+        "output_shape": "N/A",
+        "params": 41216
+      },
+      {
+        "name": "dropout",
+        "type": "Dropout",
+        "output_shape": "N/A",
+        "params": 0
+      },
+      {
+        "name": "bidirectional_1",
+        "type": "Bidirectional",
+        "output_shape": "N/A",
+        "params": 24832
+      },
+      {
+        "name": "dropout_1",
+        "type": "Dropout",
+        "output_shape": "N/A",
+        "params": 0
+      },
+      {
+        "name": "global_max_pooling1d",
+        "type": "GlobalMaxPooling1D",
+        "output_shape": "N/A",
+        "params": 0
+      },
+      {
+        "name": "dense",
+        "type": "Dense",
+        "output_shape": "N/A",
+        "params": 2080
+      },
+      {
+        "name": "dropout_2",
+        "type": "Dropout",
+        "output_shape": "N/A",
+        "params": 0
+      },
+      {
+        "name": "dense_1",
+        "type": "Dense",
+        "output_shape": "N/A",
+        "params": 33
+      }
+    ]
+  },
+  "ann": {
+    "name": "ANN Difficulty Classifier",
+    "total_params": 12867,
+    "epochs": 20,
+    "batch_size": 32,
+    "training_samples": 5000,
+    "history": {
+      "accuracy": [
+        0.6286666393280029,
+        0.7179999947547913,
+        0.7524444460868835,
+        0.7620000243186951,
+        0.7715555429458618,
+        0.7786666750907898,
+        0.7893333435058594,
+        0.7937777638435364,
+        0.8033333420753479,
+        0.7997778058052063,
+        0.8059999942779541,
+        0.8091111183166504,
+        0.8104444742202759,
+        0.8148888945579529,
+        0.8180000185966492,
+        0.8140000104904175,
+        0.8193333148956299,
+        0.8162222504615784,
+        0.8162222504615784,
+        0.8244444727897644
+      ],
+      "loss": [
+        0.9284314513206482,
+        0.7308875918388367,
+        0.6744217872619629,
+        0.6416369080543518,
+        0.6200417280197144,
+        0.5886716246604919,
+        0.5708977580070496,
+        0.5529683232307434,
+        0.536834716796875,
+        0.5311604738235474,
+        0.5265598297119141,
+        0.5077292919158936,
+        0.5012712478637695,
+        0.48691508173942566,
+        0.47990983724594116,
+        0.48079976439476013,
+        0.46275731921195984,
+        0.4630502462387085,
+        0.4587550461292267,
+        0.4440109431743622
+      ],
+      "val_accuracy": [
+        0.734000027179718,
+        0.7639999985694885,
+        0.7839999794960022,
+        0.8199999928474426,
+        0.8360000252723694,
+        0.8299999833106995,
+        0.828000009059906,
+        0.8420000076293945,
+        0.8360000252723694,
+        0.8299999833106995,
+        0.8220000267028809,
+        0.8379999995231628,
+        0.8320000171661377,
+        0.8259999752044678,
+        0.8360000252723694,
+        0.8259999752044678,
+        0.8320000171661377,
+        0.8339999914169312,
+        0.8399999737739563,
+        0.8159999847412109
+      ],
+      "val_loss": [
+        0.7523967027664185,
+        0.6401859521865845,
+        0.5751287937164307,
+        0.5336741805076599,
+        0.5125623345375061,
+        0.49583563208580017,
+        0.487161248922348,
+        0.48046842217445374,
+        0.47498422861099243,
+        0.46800532937049866,
+        0.45871487259864807,
+        0.4446522891521454,
+        0.44760555028915405,
+        0.4390556812286377,
+        0.432375431060791,
+        0.4393421411514282,
+        0.4236472249031067,
+        0.41861918568611145,
+        0.4166005253791809,
+        0.426102876663208
+      ]
+    },
+    "layers": [
+      {
+        "name": "dense_2",
+        "type": "Dense",
+        "output_shape": "N/A",
+        "params": 1664
+      },
+      {
+        "name": "batch_normalization",
+        "type": "BatchNormalization",
+        "output_shape": "N/A",
+        "params": 512
+      },
+      {
+        "name": "dropout_3",
+        "type": "Dropout",
+        "output_shape": "N/A",
+        "params": 0
+      },
+      {
+        "name": "dense_3",
+        "type": "Dense",
+        "output_shape": "N/A",
+        "params": 8256
+      },
+      {
+        "name": "batch_normalization_1",
+        "type": "BatchNormalization",
+        "output_shape": "N/A",
+        "params": 256
+      },
+      {
+        "name": "dropout_4",
+        "type": "Dropout",
+        "output_shape": "N/A",
+        "params": 0
+      },
+      {
+        "name": "dense_4",
+        "type": "Dense",
+        "output_shape": "N/A",
+        "params": 2080
+      },
+      {
+        "name": "dense_5",
+        "type": "Dense",
+        "output_shape": "N/A",
+        "params": 99
+      }
+    ]
+  },
+  "autoencoder": {
+    "name": "Sentence Autoencoder",
+    "type": "Unsupervised",
+    "description": "Trains on user notes at runtime. Uses TF-IDF + shallow autoencoder to find key sentences via reconstruction error.",
+    "architecture": [
+      "Input (TF-IDF vector)",
+      "Dense(256, relu)",
+      "Dense(64, relu) \u2014 Bottleneck",
+      "Dense(256, relu)",
+      "Dense(input_dim, sigmoid)"
+    ],
+    "training": "Unsupervised \u2014 trains on each uploaded note (50 epochs, ~2 seconds)"
+  },
+  "t5": {
+    "name": "T5-Small Question Generator",
+    "type": "Pretrained (HuggingFace)",
+    "model_id": "valhalla/t5-small-qg-hl",
+    "total_params": 60506624,
+    "description": "Fine-tuned T5-small for question generation from highlighted text. Pretrained on SQuAD.",
+    "architecture": [
+      "T5 Encoder (6 layers, 8 attention heads)",
+      "T5 Decoder (6 layers, 8 attention heads)",
+      "Vocabulary: 32128 tokens"
+    ],
+    "training": "Pretrained \u2014 auto-downloads from HuggingFace (~242MB)"
+  },
+  "dataset": {
+    "name": "SQuAD v1.1",
+    "source": "rajpurkar/squad (HuggingFace)",
+    "total_samples": 87599,
+    "used_samples": 5000,
+    "description": "Stanford Question Answering Dataset \u2014 100K+ question-answer pairs from Wikipedia articles"
+  }
+}

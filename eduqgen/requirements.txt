@@ -1,0 +1,13 @@
+flask
+tensorflow
+numpy
+pandas
+scikit-learn
+transformers
+torch
+sentencepiece
+pymupdf
+pytesseract
+Pillow
+nltk
+datasets

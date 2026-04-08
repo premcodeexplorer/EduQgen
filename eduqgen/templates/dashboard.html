@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduQGen — Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; margin: 22px 0; }
+        @media (max-width: 900px) { .charts-row { grid-template-columns: 1fr; } }
+
+        .diff-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .diff-label { width: 60px; font-size: 0.82rem; font-weight: 600; color: var(--primary); }
+        .diff-bar-bg { flex: 1; height: 8px; border-radius: 4px; background: var(--bg-soft); overflow: hidden; }
+        .diff-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+        .diff-pct { width: 38px; text-align: right; font-size: 0.82rem; font-weight: 700; color: var(--primary); }
+
+        .topic-text { max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-mute); }
+        .empty-state .e-icon { font-size: 2.5rem; margin-bottom: 12px; }
+        .empty-state h3 { color: var(--primary); margin-bottom: 6px; }
+        .empty-state a { color: var(--secondary); text-decoration: none; font-weight: 600; }
+        .reuse-busy { opacity: 0.6; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">Edu<span>Q</span>Gen</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/dashboard" class="active">Dashboard</a>
+            <a href="/models">DL Models</a>
+            <a href="/analysis">Analysis</a>
+        </div>
+    </nav>
+
+    <div class="page-wrap">
+        <div class="page-header">
+            <div><h1>Your Progress</h1><p>Quiz history, performance trends and uploaded files.</p></div>
+        </div>
+
+        {% if stats.total_quizzes == 0 %}
+        <div class="card empty-state">
+            <div class="e-icon">&#128218;</div>
+            <h3>No quizzes taken yet</h3>
+            <p>Take your first quiz to see your progress here.</p><br>
+            <a href="/">Start a Quiz &rarr;</a>
+        </div>
+        {% else %}
+
+        <div class="stat-grid">
+            <div class="stat"><div class="stat-icon">&#128221;</div><div class="stat-label">Quizzes Taken</div><div class="stat-value">{{ stats.total_quizzes }}</div></div>
+            <div class="stat"><div class="stat-icon">&#127919;</div><div class="stat-label">Average Score</div><div class="stat-value">{{ stats.avg_score }}%</div></div>
+            <div class="stat"><div class="stat-icon">&#128293;</div><div class="stat-label">Best Score</div><div class="stat-value">{{ stats.best_score }}%</div></div>
+            <div class="stat"><div class="stat-icon">&#9889;</div><div class="stat-label">Pass Streak</div><div class="stat-value">{{ stats.current_streak }}</div></div>
+        </div>
+
+        <div class="charts-row">
+            <div class="card">
+                <h3>Score Trend</h3>
+                <canvas id="scoreChart" height="160"></canvas>
+            </div>
+            <div class="card">
+                <h3>By Difficulty</h3>
+                {% set ds = stats.difficulty_stats %}
+                {% for level, colors in [('Easy', '#4caf82'), ('Medium', '#d4a14a'), ('Hard', '#e05c5c')] %}
+                {% set pct = (ds[level].correct / ds[level].total * 100) | round | int if ds[level].total > 0 else 0 %}
+                <div class="diff-row">
+                    <div class="diff-label">{{ level }}</div>
+                    <div class="diff-bar-bg"><div class="diff-bar-fill" style="width:{{ pct }}%;background:{{ colors }}"></div></div>
+                    <div class="diff-pct">{{ pct }}%</div>
+                </div>
+                {% endfor %}
+                <div class="divider"></div>
+                <div class="stat-label">Questions Answered</div>
+                <div class="stat-value" style="font-size:1.5rem">{{ stats.total_questions }}</div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom:18px">
+            <h3>Quiz History</h3>
+            <table class="table">
+                <thead><tr><th>#</th><th>Date</th><th>Topic</th><th>Score</th><th>Questions</th><th>Action</th></tr></thead>
+                <tbody>
+                    {% for q in stats.recent_quizzes %}
+                    <tr>
+                        <td>{{ q.id }}</td>
+                        <td>{{ q.date }}</td>
+                        <td class="topic-text">{{ q.topic }}</td>
+                        <td><span class="tag {% if q.percentage >= 80 %}tag-easy{% elif q.percentage >= 50 %}tag-medium{% else %}tag-hard{% endif %}">{{ q.percentage }}%</span></td>
+                        <td>{{ q.score }}/{{ q.total }}</td>
+                        <td><a href="/quiz_detail/{{ q.id }}" class="btn btn-ghost btn-sm">View</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>Uploaded Files</h3>
+            {% if uploads %}
+            <table class="table">
+                <thead><tr><th>#</th><th>Filename</th><th>Type</th><th>Date</th><th>Uses</th><th>Action</th></tr></thead>
+                <tbody>
+                    {% for u in uploads %}
+                    <tr>
+                        <td>{{ u.id }}</td>
+                        <td class="topic-text" title="{{ u.preview }}">{{ u.filename }}</td>
+                        <td><span class="tag tag-secondary">{{ u.file_type }}</span></td>
+                        <td>{{ u.date }}</td>
+                        <td>{{ u.use_count }}</td>
+                        <td>
+                            <button type="button" class="btn btn-primary btn-sm" data-reuse="{{ u.filename }}">Re-use</button>
+                            <button type="button" class="btn btn-danger btn-sm" data-delete="{{ u.filename }}" style="margin-left:4px">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-mute text-small" style="text-align:center;padding:20px 0">No files uploaded yet. <a href="/" style="color:var(--secondary);text-decoration:none;font-weight:600">Upload one &rarr;</a></p>
+            {% endif %}
+        </div>
+
+        <script>
+            new Chart(document.getElementById('scoreChart'), {
+                type: 'line',
+                data: {
+                    labels: {{ stats.dates | tojson }}.map(d => d.split(' ')[0]),
+                    datasets: [{
+                        label: 'Score %', data: {{ stats.scores_over_time | tojson }},
+                        borderColor: '#2d3a4a', backgroundColor: 'rgba(45,58,74,0.08)',
+                        fill: true, tension: 0.4, pointBackgroundColor: '#2d3a4a',
+                        pointRadius: 4, pointHoverRadius: 6, borderWidth: 2.5
+                    }]
+                },
+                options: {
+                    responsive: true, plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, max: 100, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { size: 11 }, color: '#8a8678' } },
+                        x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#8a8678' } }
+                    }
+                }
+            });
+
+            // Re-use upload
+            document.querySelectorAll('[data-reuse]').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const filename = btn.dataset.reuse;
+                    btn.classList.add('reuse-busy');
+                    btn.textContent = 'Generating...';
+                    const fd = new FormData();
+                    fd.append('reuse_file', filename);
+                    fd.append('num_questions', '10');
+                    fd.append('question_type', 'mcq');
+                    try {
+                        const res = await fetch('/upload', { method: 'POST', body: fd });
+                        const data = await res.json();
+                        if (data.success) { window.location.href = '/quiz'; }
+                        else { alert(data.error || 'Failed to re-use file'); btn.classList.remove('reuse-busy'); btn.textContent = 'Re-use'; }
+                    } catch (err) { alert('Network error'); btn.classList.remove('reuse-busy'); btn.textContent = 'Re-use'; }
+                });
+            });
+
+            // Delete upload
+            document.querySelectorAll('[data-delete]').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const filename = btn.dataset.delete;
+                    if (!confirm(`Delete "${filename}"? This cannot be undone.`)) return;
+                    try {
+                        const res = await fetch('/delete_upload', {
+                            method: 'POST', headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({filename})
+                        });
+                        const data = await res.json();
+                        if (data.success) { btn.closest('tr').remove(); }
+                        else { alert(data.error || 'Failed to delete'); }
+                    } catch (err) { alert('Network error'); }
+                });
+            });
+        </script>
+        {% endif %}
+    </div>
+</body>
+</html>

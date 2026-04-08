@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduQGen — AI Question Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <style>
+        .hero { text-align: center; padding: 28px 0 22px; }
+        .hero h1 { font-size: 1.8rem; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
+        .hero h1 span { color: var(--secondary); }
+        .hero p { color: var(--text-mute); font-size: 0.95rem; max-width: 520px; margin: 8px auto 0; }
+
+        .upload-card { max-width: 720px; margin: 0 auto; padding: 28px; }
+        .tabs { display: flex; background: var(--bg-soft); border-radius: var(--r); padding: 4px; margin-bottom: 20px; gap: 4px; }
+        .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-weight: 600; font-size: 0.88rem; color: var(--text-mute); border-radius: 8px; transition: all 0.2s; }
+        .tab.active { background: var(--card); color: var(--primary); box-shadow: var(--shadow-sm); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .drop-zone { background: var(--bg-soft); border-radius: var(--r); padding: 32px 20px; text-align: center; cursor: pointer; transition: background 0.2s; }
+        .drop-zone:hover, .drop-zone.dragover { background: var(--secondary-soft); }
+        .drop-zone .icon { font-size: 2.2rem; margin-bottom: 8px; }
+        .drop-zone .title { font-weight: 600; color: var(--primary); font-size: 0.95rem; }
+        .drop-zone .subtitle { color: var(--text-mute); font-size: 0.82rem; margin-top: 4px; }
+        .file-info { display: none; margin-top: 12px; padding: 10px 14px; background: var(--success-soft); color: #2d7a55; border-radius: var(--r); font-weight: 500; font-size: 0.88rem; align-items: center; justify-content: space-between; }
+        .file-info.show { display: flex; }
+
+        .options-row { display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; align-items: center; }
+        .options-row label { color: var(--text-mute); font-size: 0.85rem; font-weight: 600; }
+        .options-row select { width: auto; }
+
+        .loading { display: none; text-align: center; margin-top: 18px; }
+        .loading.show { display: block; }
+        .loading p { color: var(--text-mute); font-size: 0.88rem; }
+
+        /* Why EduQGen? — clean 2x2 grid, no borders */
+        .why-section { max-width: 720px; margin: 36px auto 0; }
+        .why-section h2 { font-size: 1.05rem; font-weight: 700; color: var(--primary); text-align: center; margin-bottom: 22px; }
+        .why-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 32px; }
+        @media (max-width: 600px) { .why-grid { grid-template-columns: 1fr; } }
+        .why-item { display: flex; gap: 14px; align-items: flex-start; }
+        .why-item .ico { flex-shrink: 0; width: 38px; height: 38px; border-radius: 10px; background: var(--bg-soft); color: var(--secondary); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; }
+        .why-item h4 { font-size: 0.92rem; font-weight: 700; color: var(--primary); margin-bottom: 2px; }
+        .why-item p { font-size: 0.82rem; color: var(--text-mute); line-height: 1.45; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">Edu<span>Q</span>Gen</div>
+        <div class="nav-links">
+            <a href="/" class="active">Home</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/models">DL Models</a>
+            <a href="/analysis">Analysis</a>
+        </div>
+    </nav>
+
+    <div class="page-wrap">
+        <div class="hero">
+            <h1>Generate <span>Smart Quizzes</span> from Your Notes</h1>
+            <p>Upload your study notes and let AI craft questions with answers and difficulty levels.</p>
+        </div>
+
+        <div class="card upload-card">
+            <div class="tabs">
+                <div class="tab active" data-tab="file">Upload File</div>
+                <div class="tab" data-tab="text">Paste Text</div>
+            </div>
+
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="tab-content active" id="tab-file">
+                    <div class="drop-zone" id="dropZone">
+                        <div class="icon">&#128206;</div>
+                        <div class="title">Drop your notes here or click to browse</div>
+                        <div class="subtitle">PDF, Image (JPG/PNG), or Text — Max 16MB</div>
+                    </div>
+                    <input type="file" id="fileInput" name="file" accept=".pdf,.png,.jpg,.jpeg,.bmp,.tiff,.webp,.txt" hidden>
+                    <div class="file-info" id="fileInfo">
+                        <span id="fileName"></span>
+                        <span style="cursor:pointer;color:var(--danger)" id="removeFile">&#10005;</span>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-text">
+                    <textarea name="text_input" id="textInput" placeholder="Paste your study notes here..."></textarea>
+                </div>
+
+                <div class="options-row">
+                    <label for="numQuestions">Questions</label>
+                    <select name="num_questions" id="numQuestions">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="15">15</option>
+                        <option value="20">20</option>
+                        <option value="25">25</option>
+                    </select>
+                    <label for="qType">Type</label>
+                    <select name="question_type" id="qType">
+                        <option value="descriptive">One-line Answer</option>
+                        <option value="true_false">True / False</option>
+                        <option value="mcq" selected>MCQ</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" id="btnGenerate" style="margin-top:18px">Generate Questions</button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzing your notes and generating questions...</p>
+            </div>
+            <div class="error-msg" id="errorMsg"></div>
+        </div>
+
+        <div class="why-section">
+            <h2>Why EduQGen?</h2>
+            <div class="why-grid">
+                <div class="why-item">
+                    <div class="ico">&#129302;</div>
+                    <div><h4>AI Powered</h4><p>T5 + LSTM + Autoencoder pipeline trained on SQuAD</p></div>
+                </div>
+                <div class="why-item">
+                    <div class="ico">&#127919;</div>
+                    <div><h4>Difficulty Levels</h4><p>Easy, Medium and Hard auto-classified by ANN</p></div>
+                </div>
+                <div class="why-item">
+                    <div class="ico">&#128202;</div>
+                    <div><h4>Track Progress</h4><p>Dashboard with full quiz history and analytics</p></div>
+                </div>
+                <div class="why-item">
+                    <div class="ico">&#128221;</div>
+                    <div><h4>Multiple Formats</h4><p>One-line answer, true/false, and MCQ</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault(); dropZone.classList.remove('dragover');
+            fileInput.files = e.dataTransfer.files; showFile();
+        });
+        fileInput.addEventListener('change', showFile);
+        function showFile() {
+            if (fileInput.files.length > 0) { fileName.textContent = fileInput.files[0].name; fileInfo.classList.add('show'); }
+        }
+        document.getElementById('removeFile').addEventListener('click', () => { fileInput.value = ''; fileInfo.classList.remove('show'); });
+
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorMsg = document.getElementById('errorMsg');
+            const loading = document.getElementById('loading');
+            const btn = document.getElementById('btnGenerate');
+            errorMsg.classList.remove('show'); loading.classList.add('show'); btn.disabled = true;
+
+            const formData = new FormData();
+            const activeTab = document.querySelector('.tab.active').dataset.tab;
+            if (activeTab === 'text') formData.append('text_input', document.getElementById('textInput').value);
+            else if (fileInput.files.length > 0) formData.append('file', fileInput.files[0]);
+            formData.append('num_questions', document.getElementById('numQuestions').value);
+            formData.append('question_type', document.getElementById('qType').value);
+
+            try {
+                const response = await fetch('/upload', { method: 'POST', body: formData });
+                const data = await response.json();
+                if (data.success) window.location.href = '/quiz';
+                else { errorMsg.textContent = data.error || 'Something went wrong'; errorMsg.classList.add('show'); }
+            } catch (err) { errorMsg.textContent = 'Network error. Please try again.'; errorMsg.classList.add('show'); }
+            finally { loading.classList.remove('show'); btn.disabled = false; }
+        });
+    </script>
+</body>
+</html>

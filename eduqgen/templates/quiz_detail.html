@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduQGen — Quiz #{{ quiz.id }} Review</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <style>
+        .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--text-mute); text-decoration: none; font-weight: 600; font-size: 0.85rem; margin-bottom: 16px; }
+        .back-link:hover { color: var(--primary); }
+        .quiz-summary { display: flex; justify-content: space-between; align-items: center; padding: 22px 26px; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; }
+        .quiz-summary h1 { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
+        .quiz-summary .meta { font-size: 0.82rem; color: var(--text-mute); margin-top: 4px; }
+        .score-circle { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .score-inner { width: 56px; height: 56px; border-radius: 50%; background: var(--card); display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .score-inner .num { font-size: 1rem; font-weight: 800; color: var(--primary); }
+        .score-inner .pct { font-size: 0.65rem; color: var(--text-mute); }
+        .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 900px) { .review-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">Edu<span>Q</span>Gen</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/models">DL Models</a>
+            <a href="/analysis">Analysis</a>
+        </div>
+    </nav>
+
+    <div class="page-wrap">
+        <a href="/dashboard" class="back-link">&larr; Back to Dashboard</a>
+
+        <div class="card quiz-summary">
+            <div>
+                <h1>Quiz #{{ quiz.id }} — {{ quiz.topic }}</h1>
+                <div class="meta">{{ quiz.date }} &middot; {{ quiz.total }} questions</div>
+            </div>
+            <div class="score-circle" style="background: conic-gradient(
+                {% if quiz.percentage >= 80 %}#4caf82{% elif quiz.percentage >= 60 %}#d4a14a{% elif quiz.percentage >= 40 %}#cc8a4a{% else %}#e05c5c{% endif %}
+                {{ quiz.percentage * 3.6 }}deg, #ece8de 0deg);">
+                <div class="score-inner">
+                    <div class="num">{{ quiz.score }}/{{ quiz.total }}</div>
+                    <div class="pct">{{ quiz.percentage }}%</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="review-grid">
+            {% for item in quiz.results %}
+            <div class="slim-row {{ 'is-correct' if item.is_correct else 'is-wrong' }}">
+                <div class="row-top">
+                    <span class="row-label">Q{{ loop.index }} <span class="tag tag-{{ item.difficulty | lower }}" style="margin-left:6px">{{ item.difficulty }}</span></span>
+                    <span class="tag {{ 'tag-correct' if item.is_correct else 'tag-wrong' }}">{{ 'Correct' if item.is_correct else 'Wrong' }}</span>
+                </div>
+                <div class="row-q">{{ item.question }}</div>
+                <div class="row-meta"><strong>Correct:</strong> {{ item.answer }}</div>
+                <div class="row-meta"><strong>Yours:</strong> {{ item.user_answer or 'Not answered' }}</div>
+                <div class="row-source">Source: "{{ item.source_sentence }}"</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

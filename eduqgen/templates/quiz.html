@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduQGen — Quiz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <style>
+        .quiz-layout { display: grid; grid-template-columns: 1fr 260px; gap: 24px; align-items: start; }
+        @media (max-width: 900px) { .quiz-layout { grid-template-columns: 1fr; } }
+
+        .question-card { padding: 24px 26px; margin-bottom: 14px; }
+        .question-card.is-correct { border-left: 4px solid var(--success); }
+        .question-card.is-wrong   { border-left: 4px solid var(--danger); }
+
+        .q-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .q-num { font-size: 0.74rem; color: var(--text-mute); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .q-tags { display: flex; gap: 8px; }
+        .q-text { font-size: 1.02rem; font-weight: 600; color: var(--primary); line-height: 1.55; margin-bottom: 14px; }
+
+        .options { display: flex; flex-direction: column; gap: 8px; }
+        .option { padding: 12px 16px; background: var(--bg-soft); border-radius: var(--r); cursor: pointer; transition: background 0.15s; font-size: 0.92rem; font-weight: 500; color: var(--primary); }
+        .option:hover { background: var(--secondary-soft); }
+        .option.correct { background: var(--success-soft); color: #2d7a55; }
+        .option.wrong   { background: var(--danger-soft);  color: #a83838; }
+        .option.disabled { pointer-events: none; opacity: 0.6; }
+        .option.disabled.correct { opacity: 1; }
+
+        .feedback { display: none; margin-top: 12px; padding: 12px 16px; border-radius: var(--r); font-size: 0.88rem; line-height: 1.5; }
+        .feedback.show { display: block; }
+        .feedback.correct-fb { background: var(--success-soft); color: #2d7a55; }
+        .feedback.wrong-fb   { background: var(--danger-soft);  color: #a83838; }
+        .feedback .source { font-size: 0.78rem; opacity: 0.85; margin-top: 6px; font-style: italic; }
+
+        .side-rail { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 80px; }
+        .rail-card { padding: 18px 20px; }
+        .rail-card .label { font-size: 0.72rem; color: var(--text-mute); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .rail-card .big { font-size: 1.7rem; font-weight: 800; color: var(--primary); margin-top: 4px; }
+        .rail-card .sub { font-size: 0.78rem; color: var(--text-mute); }
+        .progress { height: 6px; background: var(--bg-soft); border-radius: 3px; overflow: hidden; margin-top: 10px; }
+        .progress > div { height: 100%; background: var(--primary); transition: width 0.3s; }
+
+        .submit-bar { padding: 22px; text-align: center; margin-top: 18px; }
+        .submit-bar .summary { color: var(--text-mute); font-size: 0.88rem; margin-bottom: 12px; }
+
+        .desc-textarea { background: var(--bg-soft); border: none; border-radius: var(--r); padding: 12px; width: 100%; font-size: 0.92rem; min-height: 100px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">Edu<span>Q</span>Gen</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/models">DL Models</a>
+            <a href="/analysis">Analysis</a>
+        </div>
+    </nav>
+
+    <div class="page-wrap">
+        <div class="page-header">
+            <div><h1>Quiz Time</h1><p>Answer each question — feedback shows immediately.</p></div>
+        </div>
+
+        <div class="quiz-layout">
+            <div>
+                <div id="allQuestions">
+                {% for q in questions %}
+                    <div class="card question-card" id="qcard-{{ loop.index0 }}">
+                        <div class="q-top">
+                            <span class="q-num">Question {{ loop.index }} / {{ questions|length }}</span>
+                            <div class="q-tags">
+                                <span class="tag tag-{{ q.difficulty | lower }}">{{ q.difficulty }}</span>
+                                <span class="tag tag-secondary">{{ q.get('question_type', 'mcq') | upper }}</span>
+                            </div>
+                        </div>
+                        <div class="q-text">{{ q.question }}</div>
+                        {% set qi = loop.index0 %}
+                        {% set qtype = q.get('question_type', 'mcq') %}
+
+                        {% if qtype == 'descriptive' %}
+                        <div class="desc-input" id="opts-{{ qi }}">
+                            <textarea class="desc-textarea" data-qi="{{ qi }}" placeholder="Type your answer here..."></textarea>
+                            <button class="btn btn-primary btn-sm desc-submit-btn" data-qi="{{ qi }}" style="margin-top:10px">Submit Answer</button>
+                        </div>
+                        {% else %}
+                        <div class="options" id="opts-{{ qi }}">
+                            {% for opt in q.options %}
+                            <div class="option" data-qi="{{ qi }}" data-val="{{ opt }}">{{ opt }}</div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="feedback" id="fb-{{ loop.index0 }}">
+                            <div id="fbText-{{ loop.index0 }}"></div>
+                            <div class="source" id="fbSrc-{{ loop.index0 }}"></div>
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+
+                <div class="card submit-bar">
+                    <div class="summary" id="submitSummary">Answer all questions, then submit</div>
+                    <button class="btn btn-primary" id="btnSubmit">Submit Quiz</button>
+                </div>
+            </div>
+
+            <aside class="side-rail">
+                <div class="card rail-card">
+                    <div class="label">Score</div>
+                    <div class="big"><span id="score">0</span> / {{ questions|length }}</div>
+                    <div class="sub">Correct so far</div>
+                </div>
+                <div class="card rail-card">
+                    <div class="label">Progress</div>
+                    <div class="big"><span id="answered">0</span> / {{ questions|length }}</div>
+                    <div class="sub">Answered</div>
+                    <div class="progress"><div id="progressFill" style="width:0%"></div></div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <script>
+        const questions = {{ questions | tojson }};
+        const answers = {};
+        let score = 0;
+        let answeredCount = 0;
+
+        function handleAnswer(qi, val, clickedEl) {
+            if (answers[qi] !== undefined) return;
+            const q = questions[qi];
+            answers[qi] = val;
+            answeredCount++;
+
+            const card = document.getElementById(`qcard-${qi}`);
+            const fb = document.getElementById(`fb-${qi}`);
+            const fbText = document.getElementById(`fbText-${qi}`);
+            const fbSrc = document.getElementById(`fbSrc-${qi}`);
+            const qtype = q.question_type || 'mcq';
+
+            if (qtype === 'descriptive') {
+                card.classList.add('is-correct');
+                fb.classList.add('correct-fb');
+                fbText.innerHTML = `<strong>Expected Answer:</strong><br>${q.answer}`;
+                score++;
+                clickedEl.querySelector('textarea').disabled = true;
+                clickedEl.querySelector('button').disabled = true;
+            } else {
+                document.querySelectorAll(`#opts-${qi} .option`).forEach(o => o.classList.add('disabled'));
+                const isCorrect = val.trim().toLowerCase() === q.answer.trim().toLowerCase();
+                if (isCorrect) {
+                    clickedEl.classList.add('correct');
+                    card.classList.add('is-correct');
+                    fb.classList.add('correct-fb');
+                    fbText.innerHTML = '<strong>Correct!</strong> Well done.';
+                    score++;
+                } else {
+                    clickedEl.classList.add('wrong');
+                    card.classList.add('is-wrong');
+                    fb.classList.add('wrong-fb');
+                    fbText.innerHTML = `<strong>Incorrect.</strong> Correct answer: <strong>${q.answer}</strong>`;
+                    document.querySelectorAll(`#opts-${qi} .option`).forEach(o => {
+                        if (o.dataset.val.trim().toLowerCase() === q.answer.trim().toLowerCase()) o.classList.add('correct');
+                    });
+                }
+            }
+
+            if (q.explanation) fbText.innerHTML += `<br><em style="font-size:0.84rem;opacity:0.85">${q.explanation}</em>`;
+            fbSrc.textContent = `Source: "${q.source_sentence}"`;
+            fb.classList.add('show');
+
+            document.getElementById('score').textContent = score;
+            document.getElementById('answered').textContent = answeredCount;
+            document.getElementById('progressFill').style.width = `${(answeredCount / questions.length) * 100}%`;
+            document.getElementById('submitSummary').textContent =
+                answeredCount === questions.length
+                    ? `All done! Score: ${score}/${questions.length}`
+                    : `${answeredCount}/${questions.length} answered`;
+        }
+
+        document.querySelectorAll('.option').forEach(opt => {
+            opt.addEventListener('click', function() {
+                handleAnswer(parseInt(this.dataset.qi), this.dataset.val, this);
+            });
+        });
+        document.querySelectorAll('.desc-submit-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const qi = parseInt(this.dataset.qi);
+                const ta = document.querySelector(`.desc-textarea[data-qi="${qi}"]`);
+                handleAnswer(qi, ta.value.trim() || '(no answer)', this.parentElement);
+            });
+        });
+
+        document.getElementById('btnSubmit').addEventListener('click', async () => {
+            if (answeredCount === 0) { alert('Please answer at least one question.'); return; }
+            const answerMap = {};
+            for (const [k, v] of Object.entries(answers)) answerMap[k] = v;
+            try {
+                const res = await fetch('/submit_quiz', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({answers: answerMap})
+                });
+                const data = await res.json();
+                if (data.score !== undefined) window.location.href = '/results';
+            } catch (err) { alert('Error submitting quiz.'); }
+        });
+    </script>
+</body>
+</html>

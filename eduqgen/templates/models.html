@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduQGen — DL Models</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .pipeline { padding: 22px 26px; margin-bottom: 20px; overflow-x: auto; }
+        .pipeline-flow { display: flex; align-items: center; justify-content: center; gap: 0; white-space: nowrap; min-width: max-content; padding-top: 6px; }
+        .pipe-step { text-align: center; padding: 12px 14px; border-radius: var(--r); min-width: 100px; flex-shrink: 0; background: var(--bg-soft); }
+        .pipe-step .p-icon { font-size: 1.3rem; margin-bottom: 4px; }
+        .pipe-step .p-name { font-weight: 700; font-size: 0.78rem; color: var(--primary); }
+        .pipe-step .p-type { font-size: 0.66rem; color: var(--text-mute); margin-top: 2px; }
+        .pipe-arrow { font-size: 1.1rem; color: var(--text-soft); padding: 0 6px; }
+
+        .ds-info { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 4px; }
+        .ds-item .ds-val { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
+        .ds-item .ds-label { font-size: 0.72rem; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.4px; }
+
+        .model-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 20px; }
+        .model-card { padding: 22px 24px; }
+        .model-card.full-width { grid-column: 1 / -1; }
+        @media (max-width: 900px) { .model-grid { grid-template-columns: 1fr; } }
+
+        .model-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .model-card-header h3 { font-size: 1rem; font-weight: 700; color: var(--primary); }
+        .model-desc { color: var(--text-mute); font-size: 0.85rem; line-height: 1.5; margin-bottom: 14px; }
+
+        .model-stats { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+        .m-stat { background: var(--bg-soft); padding: 8px 14px; border-radius: 10px; }
+        .m-stat .m-val { font-size: 0.95rem; font-weight: 800; color: var(--primary); }
+        .m-stat .m-label { font-size: 0.7rem; color: var(--text-mute); margin-top: 1px; }
+
+        .arch-layers { display: flex; flex-direction: column; gap: 4px; margin: 12px 0; }
+        .arch-layer { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--bg-soft); border-radius: 8px; font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; color: var(--primary); }
+        .arch-layer .layer-type { background: var(--primary); color: #fff; padding: 2px 9px; border-radius: 5px; font-size: 0.68rem; font-weight: 600; min-width: 70px; text-align: center; }
+        .arch-layer .layer-type.alt { background: var(--secondary); }
+        .layer-arrow { text-align: center; color: var(--text-soft); font-size: 0.75rem; }
+
+        .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; }
+        @media (max-width: 700px) { .chart-row { grid-template-columns: 1fr; } }
+        .chart-box { background: var(--bg-soft); border-radius: 12px; padding: 14px; }
+        .chart-box h4 { font-size: 0.78rem; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+
+        .note-text { font-size: 0.78rem; color: var(--text-mute); margin-top: 8px; }
+        .note-text strong { color: var(--primary); }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">Edu<span>Q</span>Gen</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/models" class="active">DL Models</a>
+            <a href="/analysis">Analysis</a>
+        </div>
+    </nav>
+
+    <div class="page-wrap">
+        <div class="page-header">
+            <div><h1>Deep Learning Pipeline</h1><p>4 neural network models working together to generate intelligent questions.</p></div>
+        </div>
+
+        <div class="card pipeline">
+            <h3>End-to-End Architecture</h3>
+            <div class="pipeline-flow">
+                <div class="pipe-step"><div class="p-icon">&#128196;</div><div class="p-name">User Notes</div><div class="p-type">PDF / Image / Text</div></div>
+                <div class="pipe-arrow">&#10132;</div>
+                <div class="pipe-step"><div class="p-icon">&#129504;</div><div class="p-name">Autoencoder</div><div class="p-type">Key Sentences</div></div>
+                <div class="pipe-arrow">&#10132;</div>
+                <div class="pipe-step"><div class="p-icon">&#128200;</div><div class="p-name">BiLSTM</div><div class="p-type">Context Score</div></div>
+                <div class="pipe-arrow">&#10132;</div>
+                <div class="pipe-step"><div class="p-icon">&#9997;</div><div class="p-name">T5</div><div class="p-type">Question Gen</div></div>
+                <div class="pipe-arrow">&#10132;</div>
+                <div class="pipe-step"><div class="p-icon">&#127919;</div><div class="p-name">ANN</div><div class="p-type">Difficulty</div></div>
+                <div class="pipe-arrow">&#10132;</div>
+                <div class="pipe-step"><div class="p-icon">&#128221;</div><div class="p-name">Quiz</div><div class="p-type">MCQ + Answers</div></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Training Dataset — SQuAD v1.1</h3>
+            <p class="model-desc">Stanford Question Answering Dataset — 100K+ question-answer pairs from Wikipedia. Used to train LSTM and ANN.</p>
+            <div class="ds-info">
+                <div class="ds-item"><div class="ds-val">{{ metrics.dataset.total_samples if metrics.dataset else '87,599' }}</div><div class="ds-label">Total Samples</div></div>
+                <div class="ds-item"><div class="ds-val">{{ metrics.dataset.used_samples if metrics.dataset else '5,000' }}</div><div class="ds-label">Used for Training</div></div>
+                <div class="ds-item"><div class="ds-val">HuggingFace</div><div class="ds-label">Source</div></div>
+                <div class="ds-item"><div class="ds-val">~35 MB</div><div class="ds-label">Size</div></div>
+            </div>
+        </div>
+
+        <div class="model-grid">
+            <div class="card model-card">
+                <div class="model-card-header">
+                    <h3>1. Sentence Autoencoder</h3>
+                    <span class="tag tag-secondary">Unsupervised</span>
+                </div>
+                <p class="model-desc">Finds the most important sentences from notes via TF-IDF + shallow autoencoder. High reconstruction error = unique.</p>
+                <div class="model-stats">
+                    <div class="m-stat"><div class="m-val">~5K</div><div class="m-label">Params</div></div>
+                    <div class="m-stat"><div class="m-val">50</div><div class="m-label">Epochs</div></div>
+                    <div class="m-stat"><div class="m-val">~2s</div><div class="m-label">Train</div></div>
+                </div>
+                <div class="arch-layers">
+                    <div class="arch-layer"><span class="layer-type">Input</span>TF-IDF Vector (5000-dim)</div>
+                    <div class="layer-arrow">&#8595;</div>
+                    <div class="arch-layer"><span class="layer-type">Dense</span>256, ReLU</div>
+                    <div class="layer-arrow">&#8595;</div>
+                    <div class="arch-layer"><span class="layer-type alt">Bottleneck</span>64, ReLU</div>
+                    <div class="layer-arrow">&#8595;</div>
+                    <div class="arch-layer"><span class="layer-type">Dense</span>256, ReLU</div>
+                    <div class="layer-arrow">&#8595;</div>
+                    <div class="arch-layer"><span class="layer-type">Output</span>5000, Sigmoid</div>
+                </div>
+                <p class="note-text"><strong>Key Idea:</strong> High reconstruction error = unique = important.</p>
+            </div>
+
+            <div class="card model-card">
+                <div class="model-card-header">
+                    <h3>2. Bidirectional LSTM</h3>
+                    <span class="tag tag-easy">Supervised</span>
+                </div>
+                <p class="model-desc">Scores sentences by how "question-worthy" they are. Trained on SQuAD v1.1.</p>
+                <div class="model-stats">
+                    {% if metrics.lstm %}
+                    <div class="m-stat"><div class="m-val">{{ "{:,}".format(metrics.lstm.total_params) }}</div><div class="m-label">Params</div></div>
+                    <div class="m-stat"><div class="m-val">{{ metrics.lstm.epochs }}</div><div class="m-label">Epochs</div></div>
+                    <div class="m-stat"><div class="m-val">{{ "{:,}".format(metrics.lstm.training_samples) }}</div><div class="m-label">Samples</div></div>
+                    {% if metrics.lstm.history and metrics.lstm.history.val_accuracy %}
+                    <div class="m-stat"><div class="m-val">{{ "%.1f"|format(metrics.lstm.history.val_accuracy[-1] * 100) }}%</div><div class="m-label">Val Acc</div></div>
+                    {% endif %}
+                    {% else %}
+                    <div class="m-stat"><div class="m-val">~2.7M</div><div class="m-label">Params</div></div>
+                    <div class="m-stat"><div class="m-val">5</div><div class="m-label">Epochs</div></div>
+                    {% endif %}
+                </div>
+                <div class="arch-layers">
+                    <div class="arch-layer"><span class="layer-type">Input</span>Sequence (max_len=100)</div>
+                    <div class="layer-arrow">&#8595;</div>
+                    <div class="arch-layer"><span class="layer-type">Embedding</span>20000 vocab, 128-dim</div>
+                    <div class="layer-arrow">&#8595;</div>
+                    <div class="arch-layer"><span class="layer-type alt">BiLSTM</span>64 units</div>
+                    <div class="layer-arrow">&#8595;</div>
+                    <div class="arch-layer"><span class="layer-type alt">BiLSTM</span>64 units</div>
+                    <div class="layer-arrow">&#8595;</div>
+                    <div class="arch-layer"><span class="layer-type">Pooling</span>GlobalMaxPooling1D</div>
+                    <div class="layer-arrow">&#8595;</div>
+                    <div class="arch-layer"><span class="layer-type">Output</span>1, Sigmoid</div>
+                </div>
+            </div>
+
+            <div class="card model-card">
+                <div class="model-card-header">
+                    <h3>3. T5-Small Question Generator</h3>
+                    <span class="tag tag-medium">Pretrained</span>
+                </div>
+                <p class="model-desc">Generates natural language questions from highlighted text. Fine-tuned T5-small (valhalla/t5-small-qg-hl).</p>
+                <div class="model-stats">
+                    <div class="m-stat"><div class="m-val">60.5M</div><div class="m-label">Params</div></div>
+                    <div class="m-stat"><div class="m-val">6+6</div><div class="m-label">Enc+Dec</div></div>
+                    <div class="m-stat"><div class="m-val">8</div><div class="m-label">Heads</div></div>
+                    <div class="m-stat"><div class="m-val">242 MB</div><div class="m-label">Size</div></div>
+                </div>
+                <div class="arch-layers">
+                    <div class="arch-layer"><span class="layer-type">Input</span>"generate question: &lt;hl&gt; ... &lt;hl&gt;"</div>
+                    <div class="layer-arrow">&#8595;</div>
+                    <div class="arch-layer"><span class="layer-type alt">Encoder</span>6 Transformer blocks</div>
+                    <div class="layer-arrow">&#8595;</div>
+                    <div class="arch-layer"><span class="layer-type alt">Decoder</span>6 Transformer blocks</div>
+                    <div class="layer-arrow">&#8595;</div>
+                    <div class="arch-layer"><span class="layer-type">Output</span>32128 vocab, beam k=4</div>
+                </div>
+                <p class="note-text"><strong>Input:</strong> Answer wrapped with &lt;hl&gt; tokens. T5 generates a matching question.</p>
+            </div>
+
+            <div class="card model-card">
+                <div class="model-card-header">
+                    <h3>4. ANN Difficulty Classifier</h3>
+                    <span class="tag tag-easy">Supervised</span>
+                </div>
+                <p class="model-desc">Classifies each question as Easy, Medium, or Hard from 12 handcrafted features.</p>
+                <div class="model-stats">
+                    {% if metrics.ann %}
+                    <div class="m-stat"><div class="m-val">{{ "{:,}".format(metrics.ann.total_params) }}</div><div class="m-label">Params</div></div>
+                    <div class="m-stat"><div class="m-val">{{ metrics.ann.epochs }}</div><div class="m-label">Epochs</div></div>
+                    <div class="m-stat"><div class="m-val">{{ "{:,}".format(metrics.ann.training_samples) }}</div><div class="m-label">Samples</div></div>
+                    {% if metrics.ann.history and metrics.ann.history.val_accuracy %}
+                    <div class="m-stat"><div class="m-val">{{ "%.1f"|format(metrics.ann.history.val_accuracy[-1] * 100) }}%</div><div class="m-label">Val Acc</div></div>
+                    {% endif %}
+                    {% else %}
+                    <div class="m-stat"><div class="m-val">~12K</div><div class="m-label">Params</div></div>
+                    <div class="m-stat"><div class="m-val">20</div><div class="m-label">Epochs</div></div>
+                    {% endif %}
+                </div>
+                <div class="arch-layers">
+                    <div class="arch-layer"><span class="layer-type">Input</span>12 features</div>
+                    <div class="layer-arrow">&#8595;</div>
+                    <div class="arch-layer"><span class="layer-type">Dense</span>128, ReLU + BN + Drop(0.3)</div>
+                    <div class="layer-arrow">&#8595;</div>
+                    <div class="arch-layer"><span class="layer-type">Dense</span>64, ReLU + BN + Drop(0.3)</div>
+                    <div class="layer-arrow">&#8595;</div>
+                    <div class="arch-layer"><span class="layer-type">Dense</span>32, ReLU</div>
+                    <div class="layer-arrow">&#8595;</div>
+                    <div class="arch-layer"><span class="layer-type alt">Output</span>3, Softmax (E/M/H)</div>
+                </div>
+                <p class="note-text"><strong>12 Features:</strong> q_len, a_len, src_len, ratios, commas, reasoning/factual/recall flags, overlap, has_nums, char_len.</p>
+            </div>
+
+            {% if metrics.ann and metrics.ann.history %}
+            <div class="card model-card full-width">
+                <div class="model-card-header"><h3>ANN Training Curves</h3></div>
+                <div class="chart-row">
+                    <div class="chart-box"><h4>ANN — Loss</h4><canvas id="annLossChart" height="180"></canvas></div>
+                    <div class="chart-box"><h4>ANN — Accuracy</h4><canvas id="annAccChart" height="180"></canvas></div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if metrics.ann and metrics.ann.history %}
+    <script>
+        const annH = {{ metrics.ann.history | tojson }};
+        function makeChart(id, train, val, isLoss) {
+            // Loss => grey fill area; Accuracy => green fill area
+            const fillColor = isLoss ? 'rgba(138,134,120,0.18)' : 'rgba(76,175,130,0.20)';
+            new Chart(document.getElementById(id), {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: train.length}, (_, i) => i + 1),
+                    datasets: [
+                        {
+                            label: 'Train', data: train,
+                            borderColor: '#2d3a4a', backgroundColor: fillColor,
+                            fill: true, tension: 0.3, borderWidth: 2.5, pointRadius: 3,
+                            pointBackgroundColor: '#2d3a4a'
+                        },
+                        {
+                            label: 'Val', data: val,
+                            borderColor: '#8b7355', backgroundColor: 'transparent',
+                            fill: false, tension: 0.3, borderWidth: 2,
+                            borderDash: [6,4], pointRadius: 3,
+                            pointBackgroundColor: '#8b7355'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { font: { size: 11 }, color: '#2d3a4a' } } },
+                    scales: {
+                        y: { beginAtZero: isLoss, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { size: 10 }, color: '#8a8678' } },
+                        x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#8a8678' } }
+                    }
+                }
+            });
+        }
+        makeChart('annLossChart', annH.loss, annH.val_loss, true);
+        makeChart('annAccChart', annH.accuracy, annH.val_accuracy, false);
+    </script>
+    {% endif %}
+</body>
+</html>

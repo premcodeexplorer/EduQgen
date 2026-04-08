@@ -1,0 +1,32 @@
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Runtime user data (regenerated per session)
+data/sessions/
+data/uploads/
+data/history.json
+data/uploads_log.json
+
+# Logs
+*.log
+training_log.txt
+
+# OS
+Thumbs.db
+</content>

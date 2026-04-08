@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduQGen — Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <style>
+        .top-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 18px; margin-bottom: 26px; }
+        @media (max-width: 900px) { .top-grid { grid-template-columns: 1fr; } }
+
+        .score-card { padding: 32px; text-align: center; }
+        .score-card h1 { font-size: 1.4rem; font-weight: 800; color: var(--primary); margin-bottom: 4px; }
+        .score-card .sub { color: var(--text-mute); font-size: 0.88rem; }
+        .score-ring { width: 130px; height: 130px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 18px auto 12px; }
+        .score-ring-inner { width: 104px; height: 104px; border-radius: 50%; background: var(--card); display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .score-ring-inner .num { font-size: 1.7rem; font-weight: 800; color: var(--primary); }
+        .score-ring-inner .of { font-size: 0.78rem; color: var(--text-mute); font-weight: 600; }
+        .grade { display: inline-block; padding: 6px 20px; border-radius: 999px; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.3px; }
+
+        .actions-card { padding: 30px; display: flex; flex-direction: column; justify-content: center; }
+        .actions-card h3 { font-size: 1rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+        .actions-card p { color: var(--text-mute); font-size: 0.85rem; margin-bottom: 18px; }
+        .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .review-section h2 { font-size: 1.1rem; font-weight: 800; color: var(--primary); margin-bottom: 14px; }
+        .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 900px) { .review-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">Edu<span>Q</span>Gen</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/models">DL Models</a>
+            <a href="/analysis">Analysis</a>
+        </div>
+    </nav>
+
+    <div class="page-wrap">
+        <div class="top-grid">
+            <div class="card score-card">
+                <h1>Quiz Complete!</h1>
+                <div class="sub">Here is how you performed</div>
+                {% set pct = (score / total * 100) | round | int if total > 0 else 0 %}
+                <div class="score-ring" style="background: conic-gradient(
+                    {% if pct >= 80 %}#4caf82{% elif pct >= 60 %}#d4a14a{% elif pct >= 40 %}#cc8a4a{% else %}#e05c5c{% endif %}
+                    {{ pct * 3.6 }}deg, #ece8de 0deg);">
+                    <div class="score-ring-inner">
+                        <div class="num">{{ score }}/{{ total }}</div>
+                        <div class="of">{{ pct }}%</div>
+                    </div>
+                </div>
+                <div class="grade {% if pct >= 80 %}tag-easy{% elif pct >= 60 %}tag-medium{% else %}tag-hard{% endif %}">
+                    {% if pct >= 80 %}Excellent!{% elif pct >= 60 %}Good Job{% elif pct >= 40 %}Keep Trying{% else %}Need Practice{% endif %}
+                </div>
+            </div>
+
+            <div class="card actions-card">
+                <h3>What's next?</h3>
+                <p>Retake to improve, download a PDF, or start fresh with new notes.</p>
+                <div class="actions">
+                    <a href="/retake_quiz" class="btn btn-primary">&#8635; Retake</a>
+                    <a href="/download_pdf" class="btn btn-secondary">Download PDF</a>
+                    <a href="/dashboard" class="btn btn-ghost">Dashboard</a>
+                    <a href="/" class="btn btn-ghost">New Quiz</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="review-section">
+            <h2>Review All Questions</h2>
+            <div class="review-grid">
+                {% for item in results %}
+                <div class="slim-row {{ 'is-correct' if item.is_correct else 'is-wrong' }}">
+                    <div class="row-top">
+                        <span class="row-label">Q{{ loop.index }} <span class="tag tag-{{ item.difficulty | lower }}" style="margin-left:6px">{{ item.difficulty }}</span></span>
+                        <span class="tag {{ 'tag-correct' if item.is_correct else 'tag-wrong' }}">{{ 'Correct' if item.is_correct else 'Wrong' }}</span>
+                    </div>
+                    <div class="row-q">{{ item.question }}</div>
+                    <div class="row-meta"><strong>Correct:</strong> {{ item.answer }}</div>
+                    <div class="row-meta"><strong>Yours:</strong> {{ item.user_answer or 'Not answered' }}</div>
+                    <div class="row-source">Source: "{{ item.source_sentence }}"</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

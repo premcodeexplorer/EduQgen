@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduQGen — Text Analysis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <style>
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+        @media (max-width: 700px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+
+        .content-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; }
+        @media (max-width: 900px) { .content-grid { grid-template-columns: 1fr; } }
+
+        .panel { padding: 20px 22px; }
+        .panel h3 { font-size: 0.95rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+        .panel .panel-sub { font-size: 0.78rem; color: var(--text-mute); margin-bottom: 14px; }
+
+        .qa-row { padding: 12px 14px; border-radius: var(--r); margin-bottom: 6px; transition: background 0.15s; }
+        .qa-row:hover { background: var(--bg-soft); }
+        .qa-row .qa-q { font-size: 0.9rem; font-weight: 600; color: var(--primary); line-height: 1.45; }
+        .qa-row .qa-a { font-size: 0.82rem; color: var(--text-mute); margin-top: 4px; }
+        .qa-row .qa-a strong { color: var(--secondary); }
+        .qa-row .qa-meta { display: flex; gap: 8px; margin-top: 6px; align-items: center; }
+        .qa-row .qa-conf { font-size: 0.7rem; color: var(--text-soft); margin-left: auto; }
+
+        .heatmap { height: 4px; background: var(--bg-soft); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+        .heatmap > div { height: 100%; background: var(--secondary); border-radius: 2px; }
+
+        .header-cta { display: flex; gap: 10px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">Edu<span>Q</span>Gen</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/models">DL Models</a>
+            <a href="/analysis" class="active">Analysis</a>
+        </div>
+    </nav>
+
+    <div class="page-wrap">
+        <div class="page-header">
+            <div>
+                <h1>Text Analysis</h1>
+                <p>How the AI processed your notes — key sentences and generated questions.</p>
+            </div>
+            <div class="header-cta">
+                <a href="/" class="btn btn-ghost btn-sm">New Upload</a>
+                <a href="/quiz" class="btn btn-primary btn-sm">Start Quiz &rarr;</a>
+            </div>
+        </div>
+
+        <div class="summary-grid">
+            <div class="stat"><div class="stat-label">Total Sentences</div><div class="stat-value">{{ analysis.total_sentences }}</div></div>
+            <div class="stat"><div class="stat-label">Key Sentences</div><div class="stat-value">{{ analysis.key_sentences | length }}</div></div>
+            <div class="stat"><div class="stat-label">Questions</div><div class="stat-value">{{ analysis.num_questions }}</div></div>
+            <div class="stat"><div class="stat-label">Words</div><div class="stat-value">{{ analysis.word_count }}</div></div>
+        </div>
+
+        <div class="content-grid">
+            <div class="card panel">
+                <h3>Autoencoder &middot; Key Sentences</h3>
+                <div class="panel-sub">Ranked by reconstruction error — higher means more unique.</div>
+                {% for sent in analysis.key_sentences %}
+                <div class="list-row {{ 'is-key' if loop.index <= 3 else '' }}">
+                    <div class="num">{{ loop.index }}</div>
+                    <div class="body">
+                        <div class="text">{{ sent.text }}</div>
+                        <div class="meta">
+                            <span>Importance {{ sent.ae_score }}</span>
+                            <span class="dot">·</span>
+                            <span>LSTM {{ sent.lstm_score }}</span>
+                        </div>
+                        <div class="heatmap"><div style="width:{{ sent.ae_score_pct }}%"></div></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="card panel">
+                <h3>T5 + ANN &middot; Generated Questions</h3>
+                <div class="panel-sub">Question candidates with predicted difficulty.</div>
+                {% for q in analysis.questions %}
+                <div class="qa-row">
+                    <div class="qa-q">Q{{ loop.index }}. {{ q.question }}</div>
+                    <div class="qa-a"><strong>Answer:</strong> {{ q.answer }}</div>
+                    <div class="qa-meta">
+                        <span class="tag tag-{{ q.difficulty | lower }}">{{ q.difficulty }}</span>
+                        <span class="qa-conf">ANN {{ q.confidence }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
